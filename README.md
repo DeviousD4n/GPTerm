@@ -29,7 +29,7 @@ You can resume a previous chat session by providing the `-r` flag followed by th
 ```bash
 ./gpterm.py -r CHAT_NAME
 ```
-You can view previous chat history by typing `!history`. 
+You can view previous chat history once resumed by typing `!history`. 
 
 ### Chat Resume Autocomplete
 
