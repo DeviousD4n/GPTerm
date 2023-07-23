@@ -13,7 +13,8 @@ You can start a standard chat session by running the script with no arguments, o
 gpterm "approximately how many emperor penguins can you fit in a lamborghini aventador?"
 ```
 To enter multi-line data, such as code snippets, you can use the `!multi` command. Enter the lines of your input, and finish with `!end` on a new line.
-The chat history will be automatically saved when you type `!quit`, or `!q`.
+
+Chat history will be automatically saved when you type `!quit`, or `!q`.
 
 ### Listing Previous Chats
 
@@ -21,7 +22,7 @@ You can list all previous chat sessions by using the `-l` flag:
 ```bash
 gpterm -l
 ```
-This will display the names of all the chat files in the default directory `~/.local/share/gpterm`. The chat files are sorted based on the modification time.
+This will display the names of all the chat files in the default directory `~/.local/share/gpterm`.
 
 ### Resuming Previous Chats
 
