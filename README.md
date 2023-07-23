@@ -19,7 +19,7 @@ The chat history will be automatically saved when you type `!quit`, or `!q`.
 
 You can list all previous chat sessions by using the `-l` flag:
 ```bash
-./gpterm.py -l
+gpterm -l
 ```
 This will display the names of all the chat files in the default directory `~/.local/share/gpterm`. The chat files are sorted based on the modification time.
 
@@ -27,7 +27,7 @@ This will display the names of all the chat files in the default directory `~/.l
 
 You can resume a previous chat session by providing the `-r` flag followed by the name of the chat to resume:
 ```bash
-./gpterm.py -r CHAT_NAME
+gpterm -r CHAT_NAME
 ```
 You can view previous chat history once resumed by typing `!history`. 
 
