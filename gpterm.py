@@ -6,7 +6,7 @@ import json
 import openai
 import subprocess
 
-openai.api_key = "API_KEY"
+openai.api_key = "YOUR_API_KEY"
 block_types = ["arduino","bash","c","cpp","csharp","css","diff","go","graphql","java","javascript","json","kotlin","latex","less","lua","makefile","makefile","markdown","matlab","mathematica","nginx","objectivec","perl","pgsql","php-template","php","plaintext","python-repl","python","r","ruby","rust","scss","shell","sql","swift","typescript","vbnet","wasm","xml","yaml"]
 messages = [{"role": "system", "content": "You are a command line tool running on " + str(dict(line.strip().split('=') for line in open('/etc/os-release', 'r')).get('PRETTY_NAME', '')) + ". Succinct replies are better than long-winded explanations."}]
 model = "gpt-3.5-turbo" #"gpt-3.5-turbo-16k"
