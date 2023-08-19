@@ -8,10 +8,14 @@ import subprocess
 
 openai.api_key = "YOUR_API_KEY"
 block_types = ["arduino","bash","c","cpp","csharp","css","diff","go","graphql","java","javascript","json","kotlin","latex","less","lua","makefile","makefile","markdown","matlab","mathematica","nginx","objectivec","perl","pgsql","php-template","php","plaintext","python-repl","python","r","ruby","rust","scss","shell","sql","swift","typescript","vbnet","wasm","xml","yaml"]
-messages = [{"role": "system", "content": "You are a command line tool running on " + str(dict(line.strip().split('=') for line in open('/etc/os-release', 'r')).get('PRETTY_NAME', '')) + ". Succinct replies are better than long-winded explanations."}]
-model = "gpt-3.5-turbo" #"gpt-3.5-turbo-16k"
-code_blocks = {} 
+system = str(dict(line.strip().split('=') for line in open('/etc/os-release', 'r')).get('PRETTY_NAME', ''))
+
 block_id = 1
+current_role_index = 0
+code_blocks = {} 
+roles = [{"name": "CLI Role", "prompt": "You are a command line tool running on " + system + ". Succinct replies are better than long-winded explanations."},{"name": "Chat Role", "prompt": "You are a helpful and entertaining assistant running on the system " + system + ". You should not let the user know that something is out of the scope of your abilities but rather converse in a flowing way without mentioning that you are an AI."}]
+messages = [{"role": "system", "content": roles[current_role_index]["prompt"]}]
+model = "gpt-4" #"gpt-3.5-turbo-16k"
 
 BOLD = "\033[1m"
 ITALIC = "\033[3m"
@@ -71,7 +75,7 @@ def save_chat(chat_history, chat_exists=None):
         request = chat_history.copy()
         request.append({"role": "user", "content": "Thankyou. This chat has now concluded, can you please reply with a specific title for this entire conversation that uses a maximum of 4 words, shorter and more precise is better. No other text apart from these words should be included, as your reply will be directly saved as the title of the chat. As this will be a filename, spaces should be replaced with underscores and there can be no illegal characters. Only letters, numbers and underscores are allowed."})
         response = openai.ChatCompletion.create(model=model, messages=request)
-        filename = response.choices[0]['message']['content'][:50]
+        filename = response.choices[0]['message']['content'][:50].strip()
         dirpath = os.path.expanduser(f"~/.local/share/gpterm/")
         os.makedirs(dirpath, exist_ok=True)  
         current_time = datetime.datetime.now()
@@ -85,6 +89,7 @@ def save_chat(chat_history, chat_exists=None):
 
 
 def chat_loop(resume_chat=None):
+    global current_role_index
     try:
         while True:
             request = input(f"\n{BOLD + USERCOLOR}ASK: ")
@@ -95,7 +100,13 @@ def chat_loop(resume_chat=None):
             elif request == "!kill":
                 break
 
-            elif request.startswith('!copy '):
+            elif request == "!role":
+                current_role_index = (current_role_index + 1) % len(roles)
+                messages[0]["content"] = roles[current_role_index]["prompt"]
+                print(f"{RESET}Role changed to {roles[current_role_index]['name']}.")
+                continue
+
+            elif request.startswith('!c '):
                 copy_text = code_blocks.get(request.split(' ')[1], None)
                 if copy_text:
                     subprocess.run('xclip -selection clipboard', input=copy_text, universal_newlines=True, check=True, shell=True)
@@ -162,6 +173,7 @@ if len(sys.argv) > 1:
     CHAT COMMANDS:
         !quit or !q         Ends the current chat and saves it.
         !kill               Ends the current chat without saving.
+        !role               Cycle through roles
         !copy CODEBLOCK_ID  Copies the specified code block to the clipboard. Replace CODEBLOCK_ID with the ID of the code block.
         !history            Prints the current or resumed chat session history.
         !multi              Initiates multi-line input mode. Useful for pasting data with multiple lines such as code. 
