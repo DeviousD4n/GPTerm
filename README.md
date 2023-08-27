@@ -65,6 +65,7 @@ compdef _gpterm_completion gpterm
 This script requires the following dependencies:
 
 - `openai` Python library (install with `pip install openai`)
+- `prompt_toolkit` Python library (install with `pip install prompt_toolkit`)
 
 ## Configuration
 
