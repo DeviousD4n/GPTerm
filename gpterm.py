@@ -1,22 +1,35 @@
 #!/usr/bin/env python3
 import os
+import re
 import sys
-import datetime
 import json
 import openai
+import datetime
 import subprocess
+from prompt_toolkit import prompt
+from prompt_toolkit.formatted_text import ANSI
+from prompt_toolkit.completion import Completer, Completion
 
 openai.api_key = "YOUR_API_KEY"
-block_types = ["arduino","bash","c","cpp","csharp","css","diff","go","graphql","java","javascript","json","kotlin","latex","less","lua","makefile","makefile","markdown","matlab","mathematica","nginx","objectivec","perl","pgsql","php-template","php","plaintext","python-repl","python","r","ruby","rust","scss","shell","sql","swift","typescript","vbnet","wasm","xml","yaml"]
-system = str(dict(line.strip().split('=') for line in open('/etc/os-release', 'r')).get('PRETTY_NAME', ''))
 
 block_id = 1
+code_blocks = {} 
 current_role = 0
 current_model = 0
-code_blocks = {} 
+models = ["gpt-3.5-turbo-16k", "gpt-4"] 
+block_types = ["arduino","bash","c","cpp","csharp","css","diff","go","graphql","java","javascript","json","kotlin","latex","less","lua","makefile","markdown","matlab","mathematica","nginx","objectivec","perl","pgsql","php-template","php","plaintext","python-repl","python","r","ruby","rust","scss","shell","sql","swift","typescript","vbnet","wasm","xml","yaml"]
+system = str(dict(line.strip().split('=') for line in open('/etc/os-release', 'r')).get('PRETTY_NAME', ''))
 roles = [{"name": "CLI Role", "prompt": "You are a command line tool running on " + system + ". Succinct replies are better than long-winded explanations."},{"name": "Chat Role", "prompt": "You are a helpful and entertaining assistant running on the system " + system + ". You should not let the user know that something is out of the scope of your abilities but rather converse in a flowing way without mentioning that you are an AI."}]
 messages = [{"role": "system", "content": roles[current_role]["prompt"]}]
-models = ["gpt-3.5-turbo-16k", "gpt-4"]
+
+
+class CommandCompleter(Completer):
+    def get_completions(self, document, complete_event):
+        if document.text.startswith('!'):
+            for command in ['!quit', '!kill', '!role', '!model', '!tokens', '!copy', '!multi', '!history']:
+                if command.startswith(document.text):
+                    yield Completion(command, start_position=-len(document.text))
+
 
 BOLD = "\033[1m"
 ITALIC = "\033[3m"
@@ -93,7 +106,7 @@ def chat_loop(resume_chat=None):
     global current_role, current_model
     try:
         while True:
-            request = input(f"\n{BOLD + USERCOLOR}ASK: ")
+            request = prompt(ANSI(f"\n{BOLD + USERCOLOR}ASK: "), completer=CommandCompleter())
             if request in ('!quit', '!q'):
                 save_chat(messages, resume_chat)
                 break
@@ -112,6 +125,11 @@ def chat_loop(resume_chat=None):
                 print(f"{RESET}Model changed to {models[current_model]}.")
                 continue
 
+            elif request == "!tokens":
+                string = ' '.join(item['role'] + ' ' + item['content'] for item in messages)
+                print("Estimated tokens : {}".format(sum(2 if len(token) > 9 else 1 for token in re.findall(r'\b\w+\b|\S', string))))
+                continue
+
             elif request.startswith('!copy '):
                 copy_text = code_blocks.get(request.split(' ')[1], None)
                 if copy_text:
@@ -122,13 +140,18 @@ def chat_loop(resume_chat=None):
                 continue
 
             elif request == "!multi":
-                print("Multi-line input. Enter '!end' on a newline to finish:")  
+                print("Multi-line input. Enter '!end' or hit Ctrl-D on a newline to finish:")
                 contents = []
                 while True:
-                    line = input()
-                    if line == "!end":
+                    try:
+                        line = prompt('')
+                        if line.strip() == '!end':
+                            print("\nFinished multi-line input.")
+                            break
+                        contents.append(line)
+                    except EOFError:  # Raised on Ctrl-D
+                        print("\nFinished multi-line input.")
                         break
-                    contents.append(line)
                 request = '\n'.join(contents)
             
             elif request == "!history":  
@@ -143,6 +166,7 @@ def chat_loop(resume_chat=None):
 
     except KeyboardInterrupt:
         save_chat(messages, resume_chat)
+
 
 if len(sys.argv) > 1:
     if sys.argv[1] == '-l':
@@ -163,35 +187,25 @@ if len(sys.argv) > 1:
 
     elif sys.argv[1] == '-h': 
         print("""
-    GPTerm: A Command-Line Interface for ChatGPT. Version 0.1
+    GPTerm: A Command-Line Interface for ChatGPT. Version 0.2
     
     USAGE:
         gpt [OPTION]... [QUESTION]
 
-    DESCRIPTION:
-        GPTerm interacts with ChatGPT in a terminal-based environment.
-
     OPTIONS:
         -l                  Lists all previous chats stored in ~/.local/share/gpterm.
         -r CHAT_NAME        Resumes a previous chat session. CHAT_NAME should be replaced with the name of the chat file.
-        -h                  Displays this help message and exits.
               
     CHAT COMMANDS:
         !quit or !q         Ends the current chat and saves it.
         !kill               Ends the current chat without saving.
         !role               Cycle through roles
         !model              Cycle through models
-        !copy CODEBLOCK_ID  Copies the specified code block to the clipboard. Replace CODEBLOCK_ID with the ID of the code block.
+        !tokens             Rudimentary token count
         !history            Prints the current or resumed chat session history.
+        !copy CODEBLOCK_ID  Copies the specified code block to the clipboard. Replace CODEBLOCK_ID with the ID of the code block.
         !multi              Initiates multi-line input mode. Useful for pasting data with multiple lines such as code. 
-                            Finish multi-line entry with '!end' on a newline.
-
-    EXAMPLES:
-        gpt
-        gpt "Convert 100 meters to feet"
-        gpt -l
-        gpt -r example_chat.json
-        gpt -h
+                            Finish multi-line entry with '!end' on a newline or hit CTRL-D.
     """)
     else:
         chat_stream(sys.argv[1])
