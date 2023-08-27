@@ -2,6 +2,8 @@
 
 GPTerm is a tiny but fully featured Python script that provides a command line interface to interact with ChatGPT. It offers chat history, customisable roles, code block highlighting, multi-line input and many smaller ease of use features in a tiny package. 
 
+![GPTerm](https://raw.githubusercontent.com/DeviousD4n/GPTerm/main/terminal.png)
+
 ## Suggested installation
 
 Copy script to ~/.local/bin/gpterm and make executable. This will also allow chat list autocomplete (see below) to work correctly.
