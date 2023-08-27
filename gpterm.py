@@ -22,15 +22,6 @@ system = str(dict(line.strip().split('=') for line in open('/etc/os-release', 'r
 roles = [{"name": "CLI Role", "prompt": "You are a command line tool running on " + system + ". Succinct replies are better than long-winded explanations."},{"name": "Chat Role", "prompt": "You are a helpful and entertaining assistant running on the system " + system + ". You should not let the user know that something is out of the scope of your abilities but rather converse in a flowing way without mentioning that you are an AI."}]
 messages = [{"role": "system", "content": roles[current_role]["prompt"]}]
 
-
-class CommandCompleter(Completer):
-    def get_completions(self, document, complete_event):
-        if document.text.startswith('!'):
-            for command in ['!quit', '!kill', '!role', '!model', '!tokens', '!copy', '!multi', '!history']:
-                if command.startswith(document.text):
-                    yield Completion(command, start_position=-len(document.text))
-
-
 BOLD = "\033[1m"
 ITALIC = "\033[3m"
 RESET = "\033[0m"
@@ -39,6 +30,14 @@ BLOCKCOLOR = "\033[38;5;200m"
 USERCOLOR = "\033[38;5;75m"
 COPYCOLOR = "\033[38;5;30m"
 ERROR = "\033[38;5;1m"
+
+
+class CommandCompleter(Completer):
+    def get_completions(self, document, complete_event):
+        if document.text.startswith('!'):
+            for command in ['!quit', '!kill', '!role', '!model', '!tokens', '!copy', '!multi', '!history']:
+                if command.startswith(document.text):
+                    yield Completion(command, start_position=-len(document.text))
 
 
 def chat_stream(content):
