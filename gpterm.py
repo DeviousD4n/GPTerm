@@ -5,7 +5,10 @@ import sys
 import json
 import openai
 import datetime
-import subprocess
+import platform
+import distro
+import pyperclip
+from pathlib import Path
 from prompt_toolkit import prompt
 from prompt_toolkit.formatted_text import ANSI
 from prompt_toolkit.completion import Completer, Completion
@@ -16,11 +19,13 @@ block_id = 1
 code_blocks = {} 
 current_role = 0
 current_model = 0
-models = ["gpt-3.5-turbo-16k", "gpt-4"] 
+system = platform.system()
+system_version = {"Windows": "Windows " + platform.release(),"Linux": distro.name(pretty=True),"Darwin": "macOS"}.get(system, system)
+storage_location = Path.home() / {"Windows": "AppData/Local", "Darwin": "Library/Application Support"}.get(system, ".local/share") / 'gpterm'
+roles = [{"name": "CLI Role", "prompt": "You are a command line tool running on " + system_version + ". Succinct replies are better than long-winded explanations."},{"name": "Chat Role", "prompt": "You are a helpful and entertaining assistant running on the system " + system_version + ". You should not let the user know that something is out of the scope of your abilities but rather converse in a flowing way without mentioning that you are an AI."}]
 block_types = ["arduino","bash","c","cpp","csharp","css","diff","go","graphql","java","javascript","json","kotlin","latex","less","lua","makefile","markdown","matlab","mathematica","nginx","objectivec","perl","pgsql","php-template","php","plaintext","python-repl","python","r","ruby","rust","scss","shell","sql","swift","typescript","vbnet","wasm","xml","yaml"]
-system = str(dict(line.strip().split('=') for line in open('/etc/os-release', 'r')).get('PRETTY_NAME', ''))
-roles = [{"name": "CLI Role", "prompt": "You are a command line tool running on " + system + ". Succinct replies are better than long-winded explanations."},{"name": "Chat Role", "prompt": "You are a helpful and entertaining assistant running on the system " + system + ". You should not let the user know that something is out of the scope of your abilities but rather converse in a flowing way without mentioning that you are an AI."}]
 messages = [{"role": "system", "content": roles[current_role]["prompt"]}]
+models = ["gpt-3.5-turbo-16k", "gpt-4", "gpt-3.5-turbo"] 
 
 BOLD = "\033[1m"
 ITALIC = "\033[3m"
@@ -89,10 +94,9 @@ def save_chat(chat_history, chat_exists=None):
         request.append({"role": "user", "content": "Thankyou. This chat has now concluded, can you please reply with a specific title for this entire conversation that uses a maximum of 4 words, shorter and more precise is better. No other text apart from these words should be included, as your reply will be directly saved as the title of the chat. As this will be a filename, spaces should be replaced with underscores and there can be no illegal characters. Only letters, numbers and underscores are allowed."})
         response = openai.ChatCompletion.create(model=models[current_model], messages=request)
         filename = response.choices[0]['message']['content'][:50].strip()
-        dirpath = os.path.expanduser(f"~/.local/share/gpterm/")
-        os.makedirs(dirpath, exist_ok=True)  
+        storage_location.mkdir(parents=True, exist_ok=True)
         current_time = datetime.datetime.now()
-        filepath = os.path.join(dirpath, filename) + "-" + current_time.strftime("%H-%M_%d-%m-%y")
+        filepath = storage_location / f"{filename}-{current_time.strftime('%H-%M_%d-%m-%y')}"
 
     else:
         filepath = chat_exists
@@ -132,7 +136,7 @@ def chat_loop(resume_chat=None):
             elif request.startswith('!copy '):
                 copy_text = code_blocks.get(request.split(' ')[1], None)
                 if copy_text:
-                    subprocess.run('xclip -selection clipboard', input=copy_text, universal_newlines=True, check=True, shell=True)
+                    pyperclip.copy(copy_text)
                     print(f"{RESET + COPYCOLOR}Copied to clipboard")
                 else:
                     print(f"{RESET + ERROR}Invalid input")
@@ -170,7 +174,7 @@ def chat_loop(resume_chat=None):
 if len(sys.argv) > 1:
     if sys.argv[1] == '-l':
         try:
-            directory = os.path.expanduser("~/.local/share/gpterm")
+            directory = storage_location
             files = sorted((file for file in os.listdir(directory)), key=lambda x: os.path.getmtime(os.path.join(directory, x)))
             for file in files:
                 print(file)
@@ -179,7 +183,7 @@ if len(sys.argv) > 1:
             sys.exit(1)
 
     elif sys.argv[1] == '-r': 
-        resume_chat = os.path.expanduser(f"~/.local/share/gpterm/{sys.argv[2]}")
+        resume_chat = storage_location / sys.argv[2]
         with open(resume_chat, 'r') as f:
             messages = json.load(f)
             chat_loop(resume_chat)
@@ -192,7 +196,7 @@ if len(sys.argv) > 1:
         gpt [OPTION]... [QUESTION]
 
     OPTIONS:
-        -l                  Lists all previous chats stored in ~/.local/share/gpterm.
+        -l                  Lists all previous stored chats in .
         -r CHAT_NAME        Resumes a previous chat session. CHAT_NAME should be replaced with the name of the chat file.
               
     CHAT COMMANDS:
