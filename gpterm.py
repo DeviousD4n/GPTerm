@@ -33,14 +33,14 @@ RESET = "\033[0m"
 GPTCOLOR = "\033[38;5;99m"
 BLOCKCOLOR = "\033[38;5;200m"
 USERCOLOR = "\033[38;5;75m"
-COPYCOLOR = "\033[38;5;30m"
+GREEN = "\033[38;5;30m"
 ERROR = "\033[38;5;1m"
 
 
 class CommandCompleter(Completer):
     def get_completions(self, document, complete_event):
         if document.text.startswith('!'):
-            for command in ['!quit', '!kill', '!role', '!model', '!tokens', '!copy', '!multi', '!history']:
+            for command in ['!quit', '!kill', '!role', '!model', '!tokens', '!copy ', '!multi', '!history']:
                 if command.startswith(document.text):
                     yield Completion(command, start_position=-len(document.text))
 
@@ -71,7 +71,7 @@ def chat_stream(content):
                         buffer = ''
                         if not code_block:
                             code_blocks[str(block_id)] = code[:-3]
-                            print(f"\n{RESET + COPYCOLOR}╚═ codeblock {block_id} ═╝")
+                            print(f"\n{RESET + GREEN}╚═ !copy {block_id} ═╝")
                             block_id += 1
                             code = '' 
                             language_found = False
@@ -84,7 +84,7 @@ def chat_stream(content):
         return content 
 
     except Exception as e:
-        print(f"An error occurred: {e}")
+        print(f"{RESET + ERROR}An error occurred: {e}")
         sys.exit(1)
 
 
@@ -120,40 +120,41 @@ def chat_loop(resume_chat=None):
             elif request == "!role":
                 current_role = (current_role + 1) % len(roles)
                 messages[0]["content"] = roles[current_role]["prompt"]
-                print(f"{RESET}Role changed to {roles[current_role]['name']}.")
+                print(f"{RESET + GREEN}Role changed to {roles[current_role]['name']}.")
                 continue
 
             elif request == "!model":
                 current_model = (current_model + 1) % len(models)
-                print(f"{RESET}Model changed to {models[current_model]}.")
+                print(f"{RESET + GREEN}Model changed to {models[current_model]}.")
                 continue
 
             elif request == "!tokens":
                 string = ' '.join(item['role'] + ' ' + item['content'] for item in messages)
-                print("Estimated tokens : {}".format(sum(2 if len(token) > 9 else 1 for token in re.findall(r'\b\w+\b|\S', string))))
+                tokens_sum = sum(2 if len(token) > 9 else 1 for token in re.findall(r'\b\w+\b|\S', string))
+                print(f"{RESET + GREEN}Estimated tokens : {tokens_sum}")
                 continue
 
             elif request.startswith('!copy '):
                 copy_text = code_blocks.get(request.split(' ')[1], None)
                 if copy_text:
                     pyperclip.copy(copy_text)
-                    print(f"{RESET + COPYCOLOR}Copied to clipboard")
+                    print(f"{RESET + GREEN}Copied to clipboard")
                 else:
                     print(f"{RESET + ERROR}Invalid input")
                 continue
 
             elif request == "!multi":
-                print("Multi-line input. Enter '!end' or hit Ctrl-D on a newline to finish:")
+                print(f"{RESET + GREEN}Multi-line input. Enter '!end' or hit Ctrl-D on a newline to finish:")
                 contents = []
                 while True:
                     try:
                         line = prompt('')
                         if line.strip() == '!end':
-                            print("\nFinished multi-line input.")
+                            print(f"{RESET + GREEN}\nFinished multi-line input.")
                             break
                         contents.append(line)
                     except EOFError:  # Raised on Ctrl-D
-                        print("\nFinished multi-line input.")
+                        print(f"{RESET + GREEN}\nFinished multi-line input.")
                         break
                 request = '\n'.join(contents)
             
@@ -179,7 +180,7 @@ if len(sys.argv) > 1:
             for file in files:
                 print(file)
         except Exception as e:
-            print(f"An error occurred: {e}")
+            print(f"{RESET + ERROR}An error occurred: {e}")
             sys.exit(1)
 
     elif sys.argv[1] == '-r': 
