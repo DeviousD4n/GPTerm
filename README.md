@@ -8,6 +8,12 @@ GPTerm is a tiny but fully featured Python script that provides a command line i
 
 Copy script to ~/.local/bin/gpterm and make executable. This will also allow chat list autocomplete (see below) to work correctly.
 
+## Dependencies
+
+Run the following command to install dependencies:
+
+`pip install openai distro pyperclip prompt_toolkit`
+
 ## Usage
 
 You can start a standard chat session by running the script with no arguments, or get single replies without entering a chat session by including your question:
@@ -61,13 +67,6 @@ function _gpterm_completion {
 }
 compdef _gpterm_completion gpterm
 ```
-
-## Dependencies
-
-This script requires the following dependencies:
-
-- `openai` Python library (install with `pip install openai`)
-- `prompt_toolkit` Python library (install with `pip install prompt_toolkit`)
 
 ## Configuration
 
