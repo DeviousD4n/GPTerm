@@ -4,10 +4,11 @@ import re
 import sys
 import json
 import openai
+import distro
 import datetime
 import platform
-import distro
 import pyperclip
+import subprocess
 from pathlib import Path
 from prompt_toolkit import prompt
 from prompt_toolkit.formatted_text import ANSI
@@ -22,19 +23,22 @@ current_model = 0
 system = platform.system()
 system_version = {"Windows": "Windows " + platform.release(),"Linux": distro.name(pretty=True),"Darwin": "macOS"}.get(system, system)
 storage_location = Path.home() / {"Windows": "AppData/Local", "Darwin": "Library/Application Support"}.get(system, ".local/share") / 'gpterm'
-roles = [{"name": "CLI Role", "prompt": "You are a command line tool running on " + system_version + ". Succinct replies are better than long-winded explanations."},{"name": "Chat Role", "prompt": "You are a helpful and entertaining assistant running on the system " + system_version + ". You should not let the user know that something is out of the scope of your abilities but rather converse in a flowing way without mentioning that you are an AI."}]
+roles = [{"name": "CLI Role", "prompt": "You are a command line tool running on " + system_version + ". Succinct replies are better than long-winded explanations."},{"name": "Chat Role", "prompt": "You are a helpful and entertaining assistant running on the system " + system_version + ". You should not let the user know that something is out of the scope of your abilities but rather converse in a flowing way without mentioning that you are an AI."},{"name": "Command Role", "prompt": "Please give only shell commands that can be run on " + system_version + ". Your reply cannot contain any description and must be a functional command that can be executed. Commands cannot contain anything ambiguous. If the request is too vague, give the most logical answer that you can."}]
 block_types = ["arduino","bash","c","cpp","csharp","css","diff","go","graphql","java","javascript","json","kotlin","latex","less","lua","makefile","markdown","matlab","mathematica","nginx","objectivec","perl","pgsql","php-template","php","plaintext","python-repl","python","r","ruby","rust","scss","shell","sql","swift","typescript","vbnet","wasm","xml","yaml"]
 messages = [{"role": "system", "content": roles[current_role]["prompt"]}]
-models = ["gpt-3.5-turbo-16k", "gpt-4", "gpt-3.5-turbo"] 
+models = ["gpt-3.5-turbo-16k", "gpt-4"] 
 
 BOLD = "\033[1m"
 ITALIC = "\033[3m"
 RESET = "\033[0m"
+RED = "\033[38;5;1m"
+GREEN = "\033[38;5;30m"
 GPTCOLOR = "\033[38;5;99m"
 BLOCKCOLOR = "\033[38;5;200m"
 USERCOLOR = "\033[38;5;75m"
-GREEN = "\033[38;5;30m"
-ERROR = "\033[38;5;1m"
+
+if os.name == 'nt':
+    BOLD = ITALIC = RESET = RED = GREEN = GPTCOLOR = BLOCKCOLOR = USERCOLOR = ""
 
 
 class CommandCompleter(Completer):
@@ -50,7 +54,7 @@ def chat_stream(content):
     messages.append({"role": "user", "content": content})
     try:
         response = openai.ChatCompletion.create(model=models[current_model], messages=messages, stream=True)
-        print(f"{RESET + GPTCOLOR}GPT: ", end='')
+        print(f"{RESET + BOLD + GPTCOLOR}GPT: ", end='')
         code_block, language_found  = False, False
         buffer, content = '', ''
         code = ''
@@ -84,14 +88,14 @@ def chat_stream(content):
         return content 
 
     except Exception as e:
-        print(f"{RESET + ERROR}An error occurred: {e}")
+        print(f"{RESET + RED}An error occurred: {e}")
         sys.exit(1)
 
 
-def save_chat(chat_history, chat_exists=None):
+def save_chat(chat_exists=None):
     if chat_exists is None:
-        request = chat_history.copy()
-        request.append({"role": "user", "content": "Thankyou. This chat has now concluded, can you please reply with a specific title for this entire conversation that uses a maximum of 4 words, shorter and more precise is better. No other text apart from these words should be included, as your reply will be directly saved as the title of the chat. As this will be a filename, spaces should be replaced with underscores and there can be no illegal characters. Only letters, numbers and underscores are allowed."})
+        request = messages.copy()
+        request.append({"role": "user", "content": "Thankyou. This chat has now concluded, can you please reply with a specific title for this entire conversation (excluding the beginning system message) that uses a maximum of 4 words, shorter and more precise is better. No other text apart from these words should be included, as your reply will be directly saved as the title of the chat. As this will be a filename, spaces should be replaced with underscores and there can be no illegal characters. Only letters, numbers and underscores are allowed."})
         response = openai.ChatCompletion.create(model=models[current_model], messages=request)
         filename = response.choices[0]['message']['content'][:50].strip()
         storage_location.mkdir(parents=True, exist_ok=True)
@@ -102,7 +106,7 @@ def save_chat(chat_history, chat_exists=None):
         filepath = chat_exists
 
     with open(filepath, 'w') as f:
-        f.write(json.dumps(chat_history))
+        f.write(json.dumps(messages))
 
 
 def chat_loop(resume_chat=None):
@@ -111,7 +115,7 @@ def chat_loop(resume_chat=None):
         while True:
             request = prompt(ANSI(f"\n{BOLD + USERCOLOR}ASK: "), completer=CommandCompleter())
             if request in ('!quit', '!q'):
-                save_chat(messages, resume_chat)
+                save_chat(resume_chat)
                 break
             
             elif request == "!kill":
@@ -140,7 +144,7 @@ def chat_loop(resume_chat=None):
                     pyperclip.copy(copy_text)
                     print(f"{RESET + GREEN}Copied to clipboard")
                 else:
-                    print(f"{RESET + ERROR}Invalid input")
+                    print(f"{RESET + RED}Invalid input")
                 continue
 
             elif request == "!multi":
@@ -169,7 +173,7 @@ def chat_loop(resume_chat=None):
             messages.append({"role": "assistant", "content": content})
 
     except KeyboardInterrupt:
-        save_chat(messages, resume_chat)
+        save_chat(resume_chat)
 
 
 if len(sys.argv) > 1:
@@ -178,10 +182,32 @@ if len(sys.argv) > 1:
             directory = storage_location
             files = sorted((file for file in os.listdir(directory)), key=lambda x: os.path.getmtime(os.path.join(directory, x)))
             for file in files:
-                print(file)
+                with open(os.path.join(directory, file), 'r') as f:
+                    data = json.load(f)
+                    assistant_replies = sum(1 for item in data if item["role"] == "assistant")
+                chat_size = os.path.getsize(os.path.join(directory, file))
+                size_str = f"{chat_size} bytes" if chat_size < 1024 else f"{chat_size / 1024:.1f} KB"
+                print(f"{file} ({RESET + GREEN}{size_str} - {assistant_replies} replies{RESET})")
+
         except Exception as e:
-            print(f"{RESET + ERROR}An error occurred: {e}")
+            print(f"{RESET + RED}An error occurred: {e}")
             sys.exit(1)
+
+    elif sys.argv[1] == '-c': 
+        try:
+            messages[0]["content"] = roles[2]["prompt"]
+            messages.append({"role": "user", "content": sys.argv[2]})
+            response = openai.ChatCompletion.create(model=models[current_model], messages=messages)
+            command = response.choices[0]['message']['content']
+            print(f"{GREEN}Command: {ITALIC}{command}")
+            confirmation = input(f"{RESET + USERCOLOR}Do you wish to execute y/n? {RESET}").strip().lower()
+            if confirmation == 'y':
+                subprocess.run(command, shell=True)
+            else:
+                sys.exit()
+
+        except KeyboardInterrupt:
+            sys.exit()
 
     elif sys.argv[1] == '-r': 
         resume_chat = storage_location / sys.argv[2]
@@ -190,15 +216,16 @@ if len(sys.argv) > 1:
             chat_loop(resume_chat)
 
     elif sys.argv[1] == '-h': 
-        print("""
+        print(f"""
     GPTerm: A Command-Line Interface for ChatGPT. Version 0.2
     
     USAGE:
         gpt [OPTION]... [QUESTION]
 
     OPTIONS:
-        -l                  Lists all previous stored chats in .
+        -l                  Lists all previous stored chats in {storage_location}.
         -r CHAT_NAME        Resumes a previous chat session. CHAT_NAME should be replaced with the name of the chat file.
+        -c QUERY            Submits a QUERY to ChatGPT for a shell command and prompts the user to execute the command.
               
     CHAT COMMANDS:
         !quit or !q         Ends the current chat and saves it.
