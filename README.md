@@ -47,11 +47,13 @@ The following can be added for chat list autocmplete
 Add to .bashrc
 ```bash
 _gpterm_completion() {
-  local curr_word opts
+  local curr_word
+  local -a opts 
   curr_word="${COMP_WORDS[COMP_CWORD]}"
-  opts=$(gpterm -l)
-
-  COMPREPLY=($(compgen -W "$opts" -- "$curr_word"))
+  while IFS= read -r line; do
+    opts+=("$line")
+  done < <(gpterm -l | awk -F '(' '{print $1}' | sed 's/ *$//')
+  COMPREPLY=($(compgen -W "${opts[*]}" -- "$curr_word"))
   return 0
 }
 complete -F _gpterm_completion gpterm
@@ -59,13 +61,12 @@ complete -F _gpterm_completion gpterm
 
 Add to .zshrc
 ```zsh
-function _gpterm_completion {
+function _gpt_completion {
   local -a opts
-  IFS=$'\n' opts=($(gpterm -l))
-
+  IFS=$'\n' opts=($(gpterm -l | awk -F '(' '{print $1}' | sed 's/ *$//'))
   _describe 'values' opts
 }
-compdef _gpterm_completion gpterm
+compdef _gpt_completion gpterm
 ```
 
 ## Configuration
