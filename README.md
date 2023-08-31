@@ -4,7 +4,7 @@ GPTerm is a tiny but full featured Python script that provides a command line in
 
 ![terminal](https://github.com/DeviousD4n/GPTerm/assets/129655658/0b077a53-229b-40a8-8b85-763df1e542b0)
 
-![terminal2](https://github.com/DeviousD4n/GPTerm/assets/129655658/20070e00-9325-4247-8327-462f7543b887)
+![terminal2](https://github.com/DeviousD4n/GPTerm/assets/129655658/2f3fde65-fc74-498b-a8ee-f2c3ad962ee7)
 
 
 ## Suggested installation
