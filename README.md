@@ -72,3 +72,26 @@ compdef _gpt_completion gpterm
 ## Configuration
 
 Before using GPTerm, make sure to set your OpenAI API key by replacing the placeholder value `"API_KEY"` with your actual API key in the script. Extra roles and models can also be added in the script itself.
+
+## gpterm -h :
+
+    GPTerm: A Command-Line Interface for ChatGPT. Version 0.2
+    
+    USAGE:
+        gpt [OPTION]... [QUESTION]
+
+    OPTIONS:
+        -l                  Lists all previous stored chats in {storage_location}.
+        -r CHAT_NAME        Resumes a previous chat session. CHAT_NAME should be replaced with the name of the chat file.
+        -c QUERY            Submits a QUERY to ChatGPT for a shell command and prompts the user to execute the command.
+              
+    CHAT COMMANDS:
+        !quit or !q         Ends the current chat and saves it.
+        !kill               Ends the current chat without saving.
+        !role               Cycle through roles
+        !model              Cycle through models
+        !tokens             Rudimentary token count
+        !history            Prints the current or resumed chat session history.
+        !copy CODEBLOCK_ID  Copies the specified code block to the clipboard. Replace CODEBLOCK_ID with the ID of the code block.
+        !multi              Initiates multi-line input mode. Useful for pasting data with multiple lines such as code. 
+                            Finish multi-line entry with '!end' on a newline or hit CTRL-D.
