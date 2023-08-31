@@ -71,4 +71,4 @@ compdef _gpt_completion gpterm
 
 ## Configuration
 
-Before using GPTerm, make sure to set your OpenAI API key by replacing the placeholder value `"API_KEY"` with your actual API key in the script.
+Before using GPTerm, make sure to set your OpenAI API key by replacing the placeholder value `"API_KEY"` with your actual API key in the script. Extra roles and models can also be added in the script itself.
