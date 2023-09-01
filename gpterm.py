@@ -199,8 +199,8 @@ if len(sys.argv) > 1:
             messages.append({"role": "user", "content": sys.argv[2]})
             response = openai.ChatCompletion.create(model=models[current_model], messages=messages)
             command = response.choices[0]['message']['content']
-            print(f"{GREEN}Command: {ITALIC}{command}")
-            confirmation = input(f"{RESET + USERCOLOR}Do you wish to execute y/n? {RESET}").strip().lower()
+            print(f"{RED + ITALIC + BOLD}{command}")
+            confirmation = input(f"{RESET + USERCOLOR}Execute command? [y/n] {RESET}").strip().lower()
             if confirmation == 'y':
                 subprocess.run(command, shell=True)
             else:
@@ -238,6 +238,13 @@ if len(sys.argv) > 1:
         !multi              Initiates multi-line input mode. Useful for pasting data with multiple lines such as code. 
                             Finish multi-line entry with '!end' on a newline or hit CTRL-D.
     """)
+    
+    elif not sys.stdin.isatty(): 
+        try:
+            chat_stream(sys.argv[1] + ":\n\n" + sys.stdin.read())
+        except:
+            sys.exit()
+
     else:
         chat_stream(sys.argv[1])
 
