@@ -25,7 +25,7 @@ $ gpterm "approximately how many emperor penguins can you fit in a lamborghini a
 ```
 
 ```bash
-$ uptime | gpt "How's the system load looking?"
+$ uptime | gpterm "How's the system load looking?"
 GPT: The system load average is 0.89, 0.84, and 0.81, indicating a moderate load on the system.
 ```
 
