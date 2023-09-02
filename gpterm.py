@@ -27,6 +27,7 @@ roles = [{"name": "CLI Role", "prompt": "You are a command line tool running on 
 block_types = ["arduino","bash","c","cpp","csharp","css","diff","go","graphql","java","javascript","json","kotlin","latex","less","lua","makefile","markdown","matlab","mathematica","nginx","objectivec","perl","pgsql","php-template","php","plaintext","python-repl","python","r","ruby","rust","scss","shell","sql","swift","typescript","vbnet","wasm","xml","yaml"]
 messages = [{"role": "system", "content": roles[current_role]["prompt"]}]
 models = ["gpt-3.5-turbo-16k", "gpt-4"] 
+temperature = 0.7
 
 BOLD = "\033[1m"
 ITALIC = "\033[3m"
@@ -44,7 +45,7 @@ if os.name == 'nt':
 class CommandCompleter(Completer):
     def get_completions(self, document, complete_event):
         if document.text.startswith('!'):
-            for command in ['!quit', '!kill', '!role', '!model', '!tokens', '!copy ', '!multi', '!history']:
+            for command in ['!quit', '!kill', '!role', '!model', '!tokens', '!copy ', '!temperature', '!multi', '!history']:
                 if command.startswith(document.text):
                     yield Completion(command, start_position=-len(document.text))
 
@@ -53,7 +54,7 @@ def chat_stream(content):
     global block_id
     messages.append({"role": "user", "content": content})
     try:
-        response = openai.ChatCompletion.create(model=models[current_model], messages=messages, stream=True)
+        response = openai.ChatCompletion.create(model=models[current_model], messages=messages, temperature=temperature, stream=True)
         print(f"{RESET + BOLD + GPTCOLOR}GPT: ", end='')
         code_block, language_found  = False, False
         buffer, content = '', ''
@@ -75,7 +76,7 @@ def chat_stream(content):
                         buffer = ''
                         if not code_block:
                             code_blocks[str(block_id)] = code[:-3]
-                            print(f"\n{RESET + GREEN}╚═ !copy {block_id} ═╝")
+                            print(f"\n{RESET + GREEN}╚═ !copy {block_id} ═╝", end='')
                             block_id += 1
                             code = '' 
                             language_found = False
@@ -110,7 +111,7 @@ def save_chat(chat_exists=None):
 
 
 def chat_loop(resume_chat=None):
-    global current_role, current_model
+    global current_role, current_model, temperature
     try:
         while True:
             request = prompt(ANSI(f"\n{BOLD + USERCOLOR}ASK: "), completer=CommandCompleter())
@@ -147,6 +148,15 @@ def chat_loop(resume_chat=None):
                     print(f"{RESET + RED}Invalid input")
                 continue
 
+            elif request.startswith('!temperature'):
+                split_request = request.split(' ')
+                if len(split_request) > 1:
+                    temperature = float(split_request[1])
+                    print(f"{RESET + GREEN}Temperature set to {split_request[1]}")
+                else:
+                    print(f"{RESET + RED}Temperature {temperature}")
+                continue
+
             elif request == "!multi":
                 print(f"{RESET + GREEN}Multi-line input. Enter '!end' or hit Ctrl-D on a newline to finish:")
                 contents = []
@@ -154,11 +164,11 @@ def chat_loop(resume_chat=None):
                     try:
                         line = prompt('')
                         if line.strip() == '!end':
-                            print(f"{RESET + GREEN}\nFinished multi-line input.")
+                            print(f"{RESET + GREEN}Finished multi-line input.")
                             break
                         contents.append(line)
                     except EOFError:  # Raised on Ctrl-D
-                        print(f"{RESET + GREEN}\nFinished multi-line input.")
+                        print(f"{RESET + GREEN}Finished multi-line input.")
                         break
                 request = '\n'.join(contents)
             
@@ -217,7 +227,7 @@ if len(sys.argv) > 1:
 
     elif sys.argv[1] == '-h': 
         print(f"""
-    GPTerm: A Command-Line Interface for ChatGPT. Version 0.2
+    GPTerm: A Command-Line Interface for ChatGPT. Version 0.3
     
     USAGE:
         gpt [OPTION]... [QUESTION]
@@ -228,10 +238,11 @@ if len(sys.argv) > 1:
         -c QUERY            Submits a QUERY to ChatGPT for a shell command and prompts the user to execute the command.
               
     CHAT COMMANDS:
-        !quit or !q         Ends the current chat and saves it.
+        !quit or !q         Ends the current chat and saves it with automatic naming.
         !kill               Ends the current chat without saving.
         !role               Cycle through roles
         !model              Cycle through models
+        !temperature        Set the temperature as a float value: 0.0 to 2.0
         !tokens             Rudimentary token count
         !history            Prints the current or resumed chat session history.
         !copy CODEBLOCK_ID  Copies the specified code block to the clipboard. Replace CODEBLOCK_ID with the ID of the code block.
