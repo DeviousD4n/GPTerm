@@ -41,7 +41,6 @@ USERCOLOR = "\033[38;5;75m"
 if os.name == 'nt':
     BOLD = ITALIC = RESET = RED = GREEN = GPTCOLOR = BLOCKCOLOR = USERCOLOR = ""
 
-
 class CommandCompleter(Completer):
     def get_completions(self, document, complete_event):
         if document.text.startswith('!'):
