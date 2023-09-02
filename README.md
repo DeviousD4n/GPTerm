@@ -21,8 +21,24 @@ Run the following command to install dependencies:
 
 You can start a standard chat session by running the script with no arguments, or get single replies without entering a chat session by including your question:
 ```bash
-gpterm "approximately how many emperor penguins can you fit in a lamborghini aventador?"
+$ gpterm "approximately how many emperor penguins can you fit in a lamborghini aventador?"
 ```
+
+```bash
+$ uptime | gpt "How's the system load looking?"
+GPT: The system load average is 0.89, 0.84, and 0.81, indicating a moderate load on the system.
+```
+
+```bash
+$ gpterm -c "can you search the current directory for files containing 'gpt-3.5'?"    
+grep -r "gpt-3.5" .
+Execute command? [y/n] y
+./gptbackup.py:        response = openai.ChatCompletion.create(model='gpt-3.5-turbo', messages=messages, stream=True)
+./chatgpt-stream/gpterm.py:model = "gpt-3.5-turbo-16k" #"gpt-3.5-turbo-16k"
+./gptterm-prompt:models = ["gpt-3.5-turbo-16k", "gpt-4"]
+./gptbs4.py:        model='gpt-3.5-turbo',
+```
+
 To enter multi-line data, such as code snippets, you can use the `!multi` command. Enter the lines of your input, and finish with `!end` on a new line.
 
 Chat history will be automatically saved when you type `!quit`, or `!q`.
@@ -74,7 +90,7 @@ compdef _gpt_completion gpterm
 
 ## Configuration
 
-Before using GPTerm, make sure to set your OpenAI API key by replacing the placeholder value `"API_KEY"` with your actual API key in the script. Extra roles and models can also be added in the script itself.
+Before using GPTerm, make sure to set your OpenAI API key by replacing the placeholder value `"YOUR_API_KEY"` with your actual API key in the script. Extra roles and models can also be added in the script itself.
 
 ## gpterm -h :
 
@@ -89,10 +105,11 @@ Before using GPTerm, make sure to set your OpenAI API key by replacing the place
         -c QUERY            Submits a QUERY to ChatGPT for a shell command and prompts the user to execute the command.
               
     CHAT COMMANDS:
-        !quit or !q         Ends the current chat and saves it.
+        !quit or !q         Ends the current chat and saves it with automatic naming.
         !kill               Ends the current chat without saving.
         !role               Cycle through roles
         !model              Cycle through models
+        !temperature        Set the temperature as a float value: 0.0 to 2.0
         !tokens             Rudimentary token count
         !history            Prints the current or resumed chat session history.
         !copy CODEBLOCK_ID  Copies the specified code block to the clipboard. Replace CODEBLOCK_ID with the ID of the code block.
