@@ -39,7 +39,7 @@ Execute command? [y/n] y
 ./gptbs4.py:        model='gpt-3.5-turbo',
 ```
 
-To enter multi-line data, such as code snippets, you can use the `!multi` command. Enter the lines of your input, and finish with `!end` on a new line.
+To enter multi-line data, such as code snippets, you can use the `!multi` command. Enter the lines of your input, and finish with `!end` on a new line or with `CTRL-D` .
 
 Chat history will be automatically saved when you type `!quit`, or `!q`.
 
