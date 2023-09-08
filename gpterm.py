@@ -119,7 +119,7 @@ def chat_loop(resume_chat=None):
                 break
             
             elif request == "!kill":
-                break
+                sys.exit()
 
             elif request == "!role":
                 current_role = (current_role + 1) % len(roles)
