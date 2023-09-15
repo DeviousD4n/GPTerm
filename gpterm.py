@@ -41,6 +41,7 @@ USERCOLOR = "\033[38;5;75m"
 if os.name == 'nt':
     BOLD = ITALIC = RESET = RED = GREEN = GPTCOLOR = BLOCKCOLOR = USERCOLOR = ""
 
+
 class CommandCompleter(Completer):
     def get_completions(self, document, complete_event):
         if document.text.startswith('!'):
@@ -62,8 +63,8 @@ def chat_stream(content):
             message = chunk['choices'][0]['delta'].get('content', '')
             content += message
             if not language_found and code_block and message.strip() in block_types:
-                print(f"{BOLD + BLOCKCOLOR}{message}{RESET}", end='', flush=True) # code block language
-                language_found = not language_found
+                print(f"{BOLD + BLOCKCOLOR}{message}{RESET}", end='', flush=True) # code block language, never broken into multiple chunks. I don't understand why but it is the case.
+                language_found = True
                     
             else: # chunk stream to check for code blocks
                 for check in message: 
@@ -132,7 +133,7 @@ def chat_loop(resume_chat=None):
                 print(f"{RESET + GREEN}Model changed to {models[current_model]}.")
                 continue
 
-            elif request == "!tokens":
+            elif request == "!tokens": #token count does not match between the API throwing error on exceeding count and openai tokenizer count, tiktoken even further out of count. This is near as accurate as any other measure, a little less precise. Behaviour that I dont understand and decided to not have another import for considering the inconsistencies.
                 string = ' '.join(item['role'] + ' ' + item['content'] for item in messages)
                 tokens_sum = sum(2 if len(token) > 9 else 1 for token in re.findall(r'\b\w+\b|\S', string))
                 print(f"{RESET + GREEN}Estimated tokens : {tokens_sum}")
