@@ -49,7 +49,7 @@ Chat history will be automatically saved when you type `!quit`, or `!q`.
 $ gpterm -i "an emperor penguin in a lamborghini aventador"
 ```
 
-Default size and quality are used unless flags 'p' (1024x1792) or 'l' (1792x1024) are specified, HD quality can be specified with the flag 'hd'
+Default size and quality are used unless flags 'p' (1024x1792) or 'l' (1792x1024) are specified, HD quality can be specified with the flag 'hd'. The openai library may need to be updated if you have an old version `pip install openai --upgrade`
 
 ```bash
 $ gpterm -i l hd "an emperor penguin in a lamborghini aventador"
