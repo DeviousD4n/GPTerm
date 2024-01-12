@@ -74,7 +74,7 @@ You can view previous chat history once resumed by typing `!history`.
 
 ### Chat Resume Autocomplete
 
-The following can be added for chat list autocmplete
+The following can be added for chat list autocomplete
 
 Add to .bashrc
 ```bash
