@@ -117,7 +117,7 @@ Before using GPTerm, make sure to set your OpenAI API key by replacing the place
         -r CHAT_NAME        Resumes a previous chat session. CHAT_NAME should be replaced with the name of the chat file.
         -c QUERY            Submits a QUERY to ChatGPT for a shell command and prompts the user to execute the command.
         -i PROMPT           Generates an image with Dall-E 3, default size is used unless flags 'p' (1024x1792) or 'l' (1792x1024) are specified.
-                            Standard quality is used unless the flag 'hd' is used also. e.g gpterm -i p hd 'a cat with a hat!'
+                            Standard quality is used unless the flag 'hd' is used. e.g. gpterm -i p hd 'a cat with a hat!'
               
     CHAT COMMANDS:
         !quit or !q         Ends the current chat and saves it with automatic naming.
