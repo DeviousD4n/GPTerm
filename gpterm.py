@@ -23,7 +23,7 @@ current_model = 0
 system = platform.system()
 system_version = {"Windows": "Windows " + platform.release(),"Linux": distro.name(pretty=True),"Darwin": "macOS"}.get(system, system)
 storage_location = Path.home() / {"Windows": "AppData/Local", "Darwin": "Library/Application Support"}.get(system, ".local/share") / 'gpterm'
-roles = [{"name": "CLI Role", "prompt": "You are a command line tool running on " + system_version + ". Succinct replies are better than long-winded explanations."},{"name": "Chat Role", "prompt": "You are a helpful and entertaining assistant running on the system " + system_version + ". You should not let the user know that something is out of the scope of your abilities but rather converse in a flowing way without mentioning that you are an AI."},{"name": "Command Role", "prompt": "Please give only shell commands that can be run on " + system_version + ". Your reply cannot contain any description and must be a functional command that can be executed. Commands cannot contain anything ambiguous. If the request is too vague, give the most logical answer that you can."}]
+roles = [{"name": "CLI Role", "prompt": "You are a command line tool running on " + system_version + ". Succinct replies are better than long-winded explanations. But sounding happy is great too! =)"},{"name": "Chat Role", "prompt": "You are a helpful and entertaining assistant running on the system " + system_version + ". You should not let the user know that something is out of the scope of your abilities but rather converse in a flowing way without mentioning that you are an AI."},{"name": "Command Role", "prompt": "Please give only shell commands that can be run on " + system_version + ". Your reply cannot contain any description and must be a functional command that can be executed. Commands cannot contain anything ambiguous. If the request is too vague, give the most logical answer that you can."}]
 block_types = ["arduino","bash","c","cpp","csharp","css","diff","go","graphql","java","javascript","json","kotlin","latex","less","lua","makefile","markdown","matlab","mathematica","nginx","objectivec","perl","pgsql","php-template","php","plaintext","python-repl","python","r","ruby","rust","scss","shell","sql","swift","typescript","vbnet","wasm","xml","yaml"]
 messages = [{"role": "system", "content": roles[current_role]["prompt"]}]
 models = ["gpt-3.5-turbo-16k", "gpt-4"] 
@@ -41,14 +41,12 @@ USERCOLOR = "\033[38;5;75m"
 if os.name == 'nt':
     BOLD = ITALIC = RESET = RED = GREEN = GPTCOLOR = BLOCKCOLOR = USERCOLOR = ""
 
-
 class CommandCompleter(Completer):
     def get_completions(self, document, complete_event):
         if document.text.startswith('!'):
             for command in ['!quit', '!kill', '!role', '!model', '!tokens', '!copy ', '!temperature', '!multi', '!history']:
                 if command.startswith(document.text):
                     yield Completion(command, start_position=-len(document.text))
-
 
 def chat_stream(content):
     global block_id
@@ -92,7 +90,6 @@ def chat_stream(content):
         print(f"{RESET + RED}An error occurred: {e}")
         sys.exit(1)
 
-
 def save_chat(chat_exists=None):
     if chat_exists is None:
         request = messages.copy()
@@ -108,7 +105,6 @@ def save_chat(chat_exists=None):
 
     with open(filepath, 'w') as f:
         f.write(json.dumps(messages))
-
 
 def chat_loop(resume_chat=None):
     global current_role, current_model, temperature
@@ -185,7 +181,6 @@ def chat_loop(resume_chat=None):
     except KeyboardInterrupt:
         save_chat(resume_chat)
 
-
 if len(sys.argv) > 1:
     if sys.argv[1] == '-l':
         try:
@@ -207,7 +202,7 @@ if len(sys.argv) > 1:
         try:
             messages[0]["content"] = roles[2]["prompt"]
             messages.append({"role": "user", "content": sys.argv[2]})
-            response = openai.ChatCompletion.create(model=models[current_model], messages=messages)
+            response = openai.ChatCompletion.create(model='gpt-4', messages=messages)
             command = response.choices[0]['message']['content']
             print(f"{RED + ITALIC + BOLD}{command}")
             confirmation = input(f"{RESET + USERCOLOR}Execute command? [y/n] {RESET}").strip().lower()
@@ -218,6 +213,22 @@ if len(sys.argv) > 1:
 
         except KeyboardInterrupt:
             sys.exit()
+
+    elif sys.argv[1] == '-i': 
+        size_options = {"p": "1024x1792", "l": "1792x1024"}
+        image_size = "1024x1024"
+        image_quality = "standard"
+
+        for arg in sys.argv[2:]:
+            if arg in size_options:
+                image_size = size_options[arg]
+            elif arg == "hd":
+                image_quality = arg
+            else:
+                image_prompt = arg
+
+        response = openai.images.generate(model="dall-e-3", prompt=image_prompt, size=image_size, quality=image_quality,)
+        print(response.data[0].url)
 
     elif sys.argv[1] == '-r': 
         resume_chat = storage_location / sys.argv[2]
@@ -236,6 +247,8 @@ if len(sys.argv) > 1:
         -l                  Lists all previous stored chats in {storage_location}.
         -r CHAT_NAME        Resumes a previous chat session. CHAT_NAME should be replaced with the name of the chat file.
         -c QUERY            Submits a QUERY to ChatGPT for a shell command and prompts the user to execute the command.
+        -i PROMPT           Generates an image with Dall-E 3, default size is used unless flags 'p' (1024x1792) or 'l' (1792x1024) are specified.
+                            Standard quality is used unless the flag 'hd' is used also. e.g gpterm -i p hd 'a cat with a hat!'
               
     CHAT COMMANDS:
         !quit or !q         Ends the current chat and saves it with automatic naming.
