@@ -7,6 +7,7 @@ import openai
 import distro
 import datetime
 import platform
+import requests
 import pyperclip
 import subprocess
 from pathlib import Path
@@ -185,7 +186,7 @@ if len(sys.argv) > 1:
     if sys.argv[1] == '-l':
         try:
             directory = storage_location
-            files = sorted((file for file in os.listdir(directory)), key=lambda x: os.path.getmtime(os.path.join(directory, x)))
+            files = sorted((file for file in os.listdir(directory) if os.path.isfile(os.path.join(directory, file))), key=lambda x: os.path.getmtime(os.path.join(directory, x)))
             for file in files:
                 with open(os.path.join(directory, file), 'r') as f:
                     data = json.load(f)
@@ -202,8 +203,8 @@ if len(sys.argv) > 1:
         try:
             messages[0]["content"] = roles[2]["prompt"]
             messages.append({"role": "user", "content": sys.argv[2]})
-            response = openai.ChatCompletion.create(model='gpt-4', messages=messages)
-            command = response.choices[0]['message']['content']
+            download_image = openai.ChatCompletion.create(model='gpt-4', messages=messages)
+            command = download_image.choices[0]['message']['content']
             print(f"{RED + ITALIC + BOLD}{command}")
             confirmation = input(f"{RESET + USERCOLOR}Execute command? [y/n] {RESET}").strip().lower()
             if confirmation == 'y':
@@ -228,7 +229,16 @@ if len(sys.argv) > 1:
                 image_prompt = arg
 
         response = openai.images.generate(model="dall-e-3", prompt=image_prompt, size=image_size, quality=image_quality,)
-        print(response.data[0].url)
+        download_image = requests.get(response.data[0].url)
+        images_directory = storage_location / 'images'
+        images_directory.mkdir(parents=True, exist_ok=True)
+        current_time = datetime.datetime.now()
+        filepath = images_directory / f"Dalle-E3-Image-{current_time.strftime('%H-%M-%S_%d-%m-%y')}"
+
+        with open(filepath, 'wb') as file:
+            file.write(download_image.content)
+
+        print(f"file://{filepath}")
 
     elif sys.argv[1] == '-r': 
         resume_chat = storage_location / sys.argv[2]
