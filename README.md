@@ -1,6 +1,6 @@
 # GPTerm
 
-GPTerm is a tiny but full featured Python script that provides a command line interface for ChatGPT. It offers auto saved chat history, shell command generation, piping, customisable roles, code block highlighting, multi-line input and many other simple usability features in a single script. 
+GPTerm is a tiny but full featured Python script that provides a command line interface for ChatGPT. It offers auto saved chat history, shell command generation, piping, customisable roles, code block highlighting, multi-line input, image generation with Dall-E 3 and many other simple usability features in a single script. 
 
 ![terminal](https://github.com/DeviousD4n/GPTerm/assets/129655658/0b077a53-229b-40a8-8b85-763df1e542b0)
 
@@ -42,6 +42,19 @@ Execute command? [y/n] y
 To enter multi-line data, such as code snippets, you can use the `!multi` command. Enter the lines of your input, and finish with `!end` on a new line or with `CTRL-D` .
 
 Chat history will be automatically saved when you type `!quit`, or `!q`.
+
+### Generate images with Dall-E 3
+
+```bash
+$ gpterm -i "an emperor penguin in a lamborghini aventador"
+```
+
+Default size and quality are used unless flags 'p' (1024x1792) or 'l' (1792x1024) are specified, HD quality can be specified with the flag 'hd'
+
+```bash
+$ gpterm -i l hd "an emperor penguin in a lamborghini aventador"
+```
+![img-9tcIdP8VGnzug5k5KLEytsnb](https://github.com/DeviousD4n/GPTerm/assets/129655658/3125eca2-8100-4e95-b224-5d26dbf230d4)
 
 ### Listing Previous Chats
 
@@ -103,6 +116,8 @@ Before using GPTerm, make sure to set your OpenAI API key by replacing the place
         -l                  Lists all previous stored chats in {storage_location}.
         -r CHAT_NAME        Resumes a previous chat session. CHAT_NAME should be replaced with the name of the chat file.
         -c QUERY            Submits a QUERY to ChatGPT for a shell command and prompts the user to execute the command.
+        -i PROMPT           Generates an image with Dall-E 3, default size is used unless flags 'p' (1024x1792) or 'l' (1792x1024) are specified.
+                            Standard quality is used unless the flag 'hd' is used also. e.g gpterm -i p hd 'a cat with a hat!'
               
     CHAT COMMANDS:
         !quit or !q         Ends the current chat and saves it with automatic naming.
