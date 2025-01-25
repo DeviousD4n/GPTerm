@@ -27,7 +27,7 @@ storage_location = Path.home() / {"Windows": "AppData/Local", "Darwin": "Library
 roles = [{"name": "CLI Role", "prompt": "You are a command line tool running on " + system_version + ". Succinct replies are better than long-winded explanations. But sounding happy is great too! =)"},{"name": "Chat Role", "prompt": "You are a helpful and entertaining assistant running on the system " + system_version + ". You should not let the user know that something is out of the scope of your abilities but rather converse in a flowing way without mentioning that you are an AI."},{"name": "Command Role", "prompt": "Please give only shell commands that can be run on " + system_version + ". Your reply cannot contain any description and must be a functional command that can be executed. Commands cannot contain anything ambiguous. If the request is too vague, give the most logical answer that you can."}]
 block_types = ["arduino","bash","c","cpp","csharp","css","diff","go","graphql","java","javascript","json","kotlin","latex","less","lua","makefile","markdown","matlab","mathematica","nginx","objectivec","perl","pgsql","php-template","php","plaintext","python-repl","python","r","ruby","rust","scss","shell","sql","swift","typescript","vbnet","wasm","xml","yaml"]
 messages = [{"role": "system", "content": roles[current_role]["prompt"]}]
-models = ["gpt-3.5-turbo-16k", "gpt-4"] 
+models = ["gpt-4o-mini", "gpt-4o", "gpt-4", "gpt-3.5-turbo"] 
 temperature = 0.7
 
 BOLD = "\033[1m"
