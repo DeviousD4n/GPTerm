@@ -228,7 +228,7 @@ if len(sys.argv) > 1:
             else:
                 image_prompt = arg
 
-        response = openai.images.generate(model="dall-e-3", prompt=image_prompt, size=image_size, quality=image_quality,)
+        response = openai.Image.create(model="dall-e-3", prompt=image_prompt, size=image_size, quality=image_quality,)
         download_image = requests.get(response.data[0].url)
         images_directory = storage_location / 'images'
         images_directory.mkdir(parents=True, exist_ok=True)
